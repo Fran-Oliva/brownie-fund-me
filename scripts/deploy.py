@@ -1,6 +1,6 @@
 from brownie import FundMe, MockV3Aggregator, network, config
-from scripts.helpful_script import get_account
-from web3 import Web3
+from scripts.helpful_script import get_account, deploy_mocks, LOCAL_BLOCKCHAIN_ENVIRONMENTS
+
 
 
 def deploy_fundme():
@@ -10,19 +10,13 @@ def deploy_fundme():
     #if we are in a persistent network like rinkeby, use the associate address
     #otherwise, deploy mock contract
 
-    if network.show_active() != "development":
+    if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
         price_feed_address =  config["networks"][network.show_active()][
             "eth_usd_price_feed"
         ]
     else:
-        print(f"The active network is {network.show_active()}")
-        print("Deploying Mocks....")
-        if len(MockV3Aggregator) <= 0:
-            print(f"mock V3 aggregator len {len(MockV3Aggregator)}")
-            MockV3Aggregator.deploy(18,Web3.toWei(2000,"ether"),{"from":account})
+        deploy_mocks()
         price_feed_address = MockV3Aggregator[-1].address # recently deployed
-      
-        print("....Mocks Deployed!")
 
     fund_me = FundMe.deploy(
         price_feed_address,
